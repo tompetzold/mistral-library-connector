@@ -1,7 +1,17 @@
 & {
+    Write-Host "Mistral - Bibliothek mit Agent verbinden"
+    Write-Host "Die drei Werte werden jetzt abgefragt."
+    Write-Host ""
+
     $secureKey = Read-Host "API-Key" -AsSecureString
-    $agentId = Read-Host "Agent-ID"
-    $libraryId = Read-Host "Library-ID"
+    $agentId = (Read-Host "Agent-ID").Trim()
+    $libraryId = (Read-Host "Library-ID").Trim()
+
+    if ([string]::IsNullOrWhiteSpace($agentId) -or [string]::IsNullOrWhiteSpace($libraryId)) {
+        Write-Host ""
+        Write-Host "Verbindung fehlgeschlagen: Agent-ID oder Library-ID fehlt."
+        return
+    }
 
     $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureKey)
 
@@ -10,7 +20,6 @@
 
         $headers = @{
             Authorization = "Bearer $mistralKey"
-            "Content-Type" = "application/json"
         }
 
         $body = @{
@@ -27,6 +36,7 @@
                 -Method Patch `
                 -Uri "https://api.mistral.ai/v1/agents/$agentId" `
                 -Headers $headers `
+                -ContentType "application/json" `
                 -Body $body
 
             $connected = $false
@@ -38,15 +48,19 @@
                 }
             }
 
+            Write-Host ""
+
             if ($connected) {
-                Write-Host "✓ Bibliothek erfolgreich mit dem Agenten verbunden."
+                Write-Host "Bibliothek erfolgreich mit dem Agenten verbunden."
             }
             else {
-                Write-Host "✗ Verbindung fehlgeschlagen."
+                Write-Host "Verbindung fehlgeschlagen."
+                Write-Host "Die Bibliothek wurde in der Antwort von Mistral nicht gefunden."
             }
         }
         catch {
-            Write-Host "✗ Verbindung fehlgeschlagen."
+            Write-Host ""
+            Write-Host "Verbindung fehlgeschlagen."
             Write-Host $_.Exception.Message
         }
     }
